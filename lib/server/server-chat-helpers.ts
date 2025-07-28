@@ -18,18 +18,21 @@ export async function getServerProfile() {
   )
 
   const user = (await supabase.auth.getUser()).data.user
-  if (!user) {
-    throw new Error("User not found")
+
+  let profile: Tables<"profiles"> | null = null
+
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+
+    profile = data as Tables<"profiles"> | null
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single()
-
   if (!profile) {
-    throw new Error("Profile not found")
+    profile = { use_azure_openai: false } as Tables<"profiles">
   }
 
   const profileWithKeys = addApiKeysToProfile(profile)

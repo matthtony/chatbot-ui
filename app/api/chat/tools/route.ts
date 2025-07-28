@@ -1,5 +1,6 @@
 import { openapiToFunctions } from "@/lib/openapi-conversion"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 import { Tables } from "@/supabase/types"
 import { ChatSettings } from "@/types"
 import { OpenAIStream, StreamingTextResponse } from "ai"
@@ -16,6 +17,13 @@ export async function POST(request: Request) {
 
   try {
     const profile = await getServerProfile()
+
+    if (!checkRateLimit(profile.user_id)) {
+      return new Response(
+        JSON.stringify({ message: "Rate limit exceeded" }),
+        { status: 429 }
+      )
+    }
 
     checkApiKey(profile.openai_api_key, "OpenAI")
 

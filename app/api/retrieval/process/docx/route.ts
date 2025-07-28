@@ -6,6 +6,7 @@ import { FileItemChunk } from "@/types"
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 
 export async function POST(req: Request) {
   const json = await req.json()
@@ -23,6 +24,13 @@ export async function POST(req: Request) {
     )
 
     const profile = await getServerProfile()
+
+    if (!checkRateLimit(profile.user_id)) {
+      return new NextResponse(
+        JSON.stringify({ message: "Rate limit exceeded" }),
+        { status: 429 }
+      )
+    }
 
     if (embeddingsProvider === "openai") {
       if (profile.use_azure_openai) {

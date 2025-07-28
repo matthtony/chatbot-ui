@@ -277,6 +277,9 @@ You can also add API keys as environment variables.
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_GPT_45_VISION_NAME`
 
+If you expose these keys to users, they are shared across all requests. Consider
+configuring server-side rate limiting to avoid abuse and unexpected costs.
+
 For the full list of environment variables, refer to the '.env.local.example' file. If the environment variables are set for API keys, it will disable the input in the user settings.
 
 Click "Deploy" and wait for your frontend to deploy.

@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 import { ChatSettings } from "@/types"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
@@ -13,6 +14,13 @@ export async function POST(request: Request) {
 
   try {
     const profile = await getServerProfile()
+
+    if (!checkRateLimit(profile.user_id)) {
+      return new Response(
+        JSON.stringify({ message: "Rate limit exceeded" }),
+        { status: 429 }
+      )
+    }
 
     checkApiKey(profile.google_gemini_api_key, "Google")
 

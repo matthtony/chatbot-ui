@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 import { ChatAPIPayload } from "@/types"
 import { OpenAIStream, StreamingTextResponse } from "ai"
 import OpenAI from "openai"
@@ -12,6 +13,13 @@ export async function POST(request: Request) {
 
   try {
     const profile = await getServerProfile()
+
+    if (!checkRateLimit(profile.user_id)) {
+      return new Response(
+        JSON.stringify({ message: "Rate limit exceeded" }),
+        { status: 429 }
+      )
+    }
 
     checkApiKey(profile.azure_openai_api_key, "Azure OpenAI")
 

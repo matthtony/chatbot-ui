@@ -1,5 +1,9 @@
 import { Tables } from "@/supabase/types"
 import { ChatPayload, MessageImage } from "@/types"
+import {
+  DEFAULT_DOCUMENT_TEXT,
+  DEFAULT_SYSTEM_INSTRUCTIONS
+} from "@/lib/default-profile"
 import { encode } from "gpt-tokenizer"
 import { getBase64FromDataURL, getMediaTypeFromDataURL } from "@/lib/utils"
 
@@ -32,7 +36,7 @@ const buildBasePrompt = (
 
 export async function buildFinalMessages(
   payload: ChatPayload,
-  profile: Tables<"profiles">,
+  profile: Tables<"profiles"> | null,
   chatImages: MessageImage[]
 ) {
   const {
@@ -41,13 +45,33 @@ export async function buildFinalMessages(
     chatMessages,
     assistant,
     messageFileItems,
-    chatFileItems
+    chatFileItems,
+    documentText
   } = payload
+
+  let finalWorkspaceInstructions =
+    chatSettings.includeWorkspaceInstructions ? workspaceInstructions : ""
+  let finalProfileContext =
+    chatSettings.includeProfileContext && profile ? profile.profile_context || "" : ""
+
+  if (!profile) {
+    if (DEFAULT_SYSTEM_INSTRUCTIONS) {
+      finalWorkspaceInstructions = [finalWorkspaceInstructions, DEFAULT_SYSTEM_INSTRUCTIONS]
+        .filter(Boolean)
+        .join("\n")
+    }
+    const anonDocText = documentText || DEFAULT_DOCUMENT_TEXT
+    if (anonDocText) {
+      finalProfileContext = [finalProfileContext, anonDocText]
+        .filter(Boolean)
+        .join("\n")
+    }
+  }
 
   const BUILT_PROMPT = buildBasePrompt(
     chatSettings.prompt,
-    chatSettings.includeProfileContext ? profile.profile_context || "" : "",
-    chatSettings.includeWorkspaceInstructions ? workspaceInstructions : "",
+    finalProfileContext,
+    finalWorkspaceInstructions,
     assistant
   )
 
@@ -169,6 +193,16 @@ export async function buildFinalMessages(
       content: `${
         finalMessages[finalMessages.length - 1].content
       }\n\n${retrievalText}`
+    }
+  }
+
+  if (!profile && (documentText || DEFAULT_DOCUMENT_TEXT)) {
+    const retrievalText = buildRetrievalText([
+      { content: documentText || DEFAULT_DOCUMENT_TEXT } as Tables<"file_items">
+    ])
+    finalMessages[finalMessages.length - 1] = {
+      ...finalMessages[finalMessages.length - 1],
+      content: `${finalMessages[finalMessages.length - 1].content}\n\n${retrievalText}`
     }
   }
 

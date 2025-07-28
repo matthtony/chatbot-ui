@@ -29,7 +29,7 @@ export const ChangePassword: FC<ChangePasswordProps> = () => {
 
     toast.success("Password changed successfully.")
 
-    return router.push("/login")
+    return router.push("/")
   }
 
   return (

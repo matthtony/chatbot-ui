@@ -8,6 +8,7 @@ import { deleteMessagesIncludingAndAfter } from "@/db/messages"
 import { buildFinalMessages } from "@/lib/build-prompt"
 import { Tables } from "@/supabase/types"
 import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
+import { DEFAULT_DOCUMENT_TEXT } from "@/lib/default-profile"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
@@ -267,7 +268,8 @@ export const useChatHandler = () => {
           : [...chatMessages, tempUserChatMessage],
         assistant: selectedChat?.assistant_id ? selectedAssistant : null,
         messageFileItems: retrievedFileItems,
-        chatFileItems: chatFileItems
+        chatFileItems: chatFileItems,
+        documentText: DEFAULT_DOCUMENT_TEXT
       }
 
       let generatedText = ""

@@ -1,5 +1,6 @@
 import { generateLocalEmbedding } from "@/lib/generate-local-embedding"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 import { Database } from "@/supabase/types"
 import { createClient } from "@supabase/supabase-js"
 import OpenAI from "openai"
@@ -22,6 +23,13 @@ export async function POST(request: Request) {
     )
 
     const profile = await getServerProfile()
+
+    if (!checkRateLimit(profile.user_id)) {
+      return new Response(
+        JSON.stringify({ message: "Rate limit exceeded" }),
+        { status: 429 }
+      )
+    }
 
     if (embeddingsProvider === "openai") {
       if (profile.use_azure_openai) {

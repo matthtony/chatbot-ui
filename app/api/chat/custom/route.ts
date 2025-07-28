@@ -5,6 +5,7 @@ import { OpenAIStream, StreamingTextResponse } from "ai"
 import { ServerRuntime } from "next"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
+import { checkRateLimit } from "@/lib/server/rate-limit"
 
 export const runtime: ServerRuntime = "edge"
 
